@@ -254,8 +254,8 @@ let dataSet = [
                     render: function(data, type, row) {
 						return `
 							<div class="d-flex">
-								<a href="" class="btn btn-secondary shadow btn-xs sharp me-1" title="Edit" onclick="event.preventDefault(); $.popup({ url: '/edit-tipe/${row.id}/', title: 'Edit Tipe' })"><i class="fa fa-pencil-alt"></i></a>
-								<a href="delete-tipe/${row.id}" class="btn btn-danger shadow btn-xs sharp btn-delete" data-name="${row.name}"><i class="fa fa-trash"></i></a>
+								<a href="" class="btn btn-secondary shadow btn-xs sharp me-1" title="Edit" onclick="event.preventDefault(); $.popup({ url: '/edit-merek/${row.id}/', title: 'Edit Merek' })"><i class="fa fa-pencil-alt"></i></a>
+								<a href="delete-merek/${row.id}" class="btn btn-danger shadow btn-xs sharp btn-delete" data-name="${row.name}"><i class="fa fa-trash"></i></a>
 							</div>
 						`;
 					},					
@@ -459,6 +459,7 @@ let dataSet = [
                 { data: 'tipe' },
                 { data: 'nomor_rangka' },
                 { data: 'nomor_plat' },
+                { data: 'dealer' },
                 { data: 'status',
                     render: function(data, type, row) {
                         var statusBadge = '',

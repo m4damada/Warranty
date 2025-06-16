@@ -32,6 +32,10 @@
         <input type="text" class="form-control" name="alamat" id="" placeholder="Masukkan Alamat Lengkap Konsumen" value="{{$data['alamat']}}" required>
     </div>
     <div class="form-group label-font">
+        <label for="">Nama Dealer</label>
+        <input type="text" class="form-control" name="dealer" id="" placeholder="Masukkan Nama Dealer" value="{{$data['dealer']}}" required>
+    </div>
+    <div class="form-group label-font">
         <label for="">Alamat Reseller</label>
         <input type="text" class="form-control" name="alamat_reseller" id="" placeholder="Masukkan Alamat Lengkap Reseller" value="{{$data['alamat_reseller']}}" required>
     </div>

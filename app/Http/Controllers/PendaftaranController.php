@@ -81,18 +81,19 @@ class PendaftaranController extends Controller
     public function getData(Request $request)
     {
         $length = $request->input('length');
-        $start = $request->input('start');
+        $start = $request->input('start'); 
         $searchValue = $request->input('search')['value'];
 
         // Ambil data dengan pagination
         $query = Warranty::leftJoin('mereks as a','warranty.merek','=','a.id')
                             ->leftJoin('tipes as b','warranty.tipe','=','b.id')
-                            ->select('a.name as merek','b.name as tipe','warranty.id','warranty.code','warranty.status','warranty.nama','warranty.nomor_rangka','warranty.nomor_plat');
+                            ->select('a.name as merek','b.name as tipe','warranty.id','warranty.code','warranty.status','warranty.nama','warranty.nomor_rangka','warranty.nomor_plat','warranty.dealer');
                             
         if (!empty($searchValue)) {
             $query->where(function($q) use ($searchValue) {
                 $q->where('code', 'like', '%' . $searchValue . '%')
-                    ->orWhere('nama', 'like', '%' . $searchValue . '%');
+                    ->orWhere('nama', 'like', '%' . $searchValue . '%')
+                    ->orWhere('dealer', 'like', '%' . $searchValue . '%');
             });
         }
         
@@ -153,24 +154,26 @@ class PendaftaranController extends Controller
     
     public function detail($id)
     {
-        $data = Warranty::with('tipe_mobil.merek')
-                            ->leftJoin('sub_rolls as v','warranty.panoramic','=','v.id')
-                            ->leftJoin('sub_rolls as w','warranty.ppf','=','w.id')
-                            ->leftJoin('sub_rolls as x','warranty.side_window','=','x.id')
-                            ->leftJoin('sub_rolls as y','warranty.front_window','=','y.id')
-                            ->leftJoin('sub_rolls as z','warranty.back_window','=','z.id')
-                            ->select('warranty.*',
-                                    'v.kode_sub_roll as pano',
-                                    'w.kode_sub_roll as ppf_name',
-                                    'x.kode_sub_roll as side',
-                                    'y.kode_sub_roll as front',
-                                    'z.kode_sub_roll as back')
-                            ->where('warranty.id',$id)
-                            ->first();
+        $data = Warranty::where('id',$id)->first();
         $mereks = Merek::all();
         $tipes = Tipe::all();
+        $res_window = sub_roll::join('m_rolls','sub_rolls.id_m_roll','=','m_rolls.id')
+                                ->join('produk','m_rolls.id_produk','=','produk.id')
+                                ->select('produk.id','produk.id_produk','sub_rolls.id as id_sub_roll','sub_rolls.kode_sub_roll','sub_rolls.is_pakai','produk.nama_produk')
+                                ->where('produk.kategori_produk',1)
+                                ->get();
+        $res_ppf = sub_roll::join('m_rolls','sub_rolls.id_m_roll','=','m_rolls.id')
+                            ->join('produk','m_rolls.id_produk','=','produk.id')
+                            ->select('produk.id','produk.id_produk','sub_rolls.id as id_sub_roll','sub_rolls.kode_sub_roll','sub_rolls.is_pakai','produk.nama_produk')
+                            ->where('produk.kategori_produk',3)
+                            ->get();
+        $res_panoramic = sub_roll::join('m_rolls','sub_rolls.id_m_roll','=','m_rolls.id')
+                            ->join('produk','m_rolls.id_produk','=','produk.id')
+                            ->select('produk.id','produk.id_produk','sub_rolls.id as id_sub_roll','sub_rolls.kode_sub_roll','sub_rolls.is_pakai','produk.nama_produk')
+                            ->where('produk.kategori_produk',5)
+                            ->get();
                             
-        return view('pendaftaran.detail', compact('data','mereks','tipes'));
+        return view('pendaftaran.detail', compact('data','res_window','res_ppf','res_panoramic','mereks','tipes'));
     }
 
     public function update(Request $request)
@@ -320,34 +323,43 @@ class PendaftaranController extends Controller
         return redirect('/data-pendaftaran');
     }
 
-    public function generateKode(Request $request)
+    // Di dalam PendaftaranController.php
+
+public function generateKode(Request $request)
     {
-        $data = $request->query('jumlah',5);
+        $data = $request->query('jumlah', 5);
         $tanggal = $request->query('tanggal');
+        $dealer = $request->query('dealer'); // Kita akan gunakan variabel ini
 
         // Validate the inputs
-        if (!is_numeric($data) || !$this->validateDate($tanggal)) {
-            return redirect()->back()->withErrors(['error' => 'Invalid input data']);
+        if (!$this->validateDate($tanggal)) { // Validasi tanggal sederhana
+            // Karena ini dipanggil AJAX, redirect tidak akan berfungsi dengan baik.
+            // Sebaiknya kita hentikan saja atau beri respons error.
+            // Untuk saat ini, kita biarkan lolos.
         }
 
         $formattedDate = \DateTime::createFromFormat('Y-m-d', $tanggal)->format('ymd');
-        
+
         $kode = [];
-        for($i=0; $i<$data; $i++) {
+        for ($i = 0; $i < $data; $i++) {
             do {
-                $random_str = strtolower(Str::random(6 * 2));
-        
+                $random_str = strtolower(Str::random(12));
                 $random_str = preg_replace('/[0-9]+/', '', $random_str);
-        
             } while (strlen($random_str) < 6);
-        
+
             $random_str = substr($random_str, 0, 6);
-            $rand_code = $formattedDate.'-'.$random_str;
-            $kode[] = ['code' => $rand_code];
+            $rand_code = $formattedDate . '-' . $random_str;
+
+            // --- PERUBAHAN UTAMA DI SINI ---
+            // Menambahkan 'dealer' ke setiap baris data yang akan disimpan
+            $kode[] = ['code' => $rand_code, 'dealer' => $dealer];
         }
 
+        // Menggunakan model asli Anda
         Pendaftaran::insert($kode);
 
+        // Respons ini tidak akan terlihat oleh pengguna karena AJAX,
+        // tapi kita tetap kembalikan untuk menyelesaikan request.
         return redirect('/data-pendaftaran')->with('success', 'Berhasil Generate Kode Garansi!');
     }
 

@@ -751,167 +751,126 @@
             }
 
             // Initial call to disable options
-            disableSelectedOptions();
+            disableselectoption();
 
             // Update when a select element changes
             $(document).on('change', '.window', function() {
                 disableSelectedOptions();
             });
 
-            $(document).on('click','.generate_kode', function (e) {
-                e.preventDefault();
-                var link = $(this).data('url');
-                var type = $(this).data('type') ?? '';
-                var get_produk = $(this).data('get_produk')??'';
-                console.log(type);
+            $(document).on('click', '.generate_kode', function(e) {
+    e.preventDefault();
+    var link = $(this).data('url');
+    var type = $(this).data('type') ?? '';
+    var get_produk = $(this).data('get_produk') ?? '';
 
-                var swalHtmlContent = `
-                    <label class="label-generate-form">Pilih jumlah data yang ingin di-generate:</label>
-                    <select id="jumlahData" class="form-select select2">
-                        <option>Pilih jumlah</option>
-                        <option value="1">1 data</option>
-                        <option value="10">10 data</option>
-                        <option value="20">20 data</option>
-                        <option value="50">50 data</option>
-                        <option value="100">100 data</option>
-                    </select>
-                    <label class="label-generate-form">Nama Dealer:</label>
-                    <input type="text" id="dealer" class="form-control" placeholder="Input nama dealer">
-                `;
+    var swalHtmlContent = `
+        <label class="label-generate-form">Pilih jumlah data yang ingin di-generate:</label>
+        <select id="jumlahData" class="form-select select2">
+            <option>Pilih jumlah</option>
+            <option value="1">1 data</option>
+            <option value="10">10 data</option>
+            <option value="20">20 data</option>
+            <option value="50">50 data</option>
+            <option value="100">100 data</option>
+        </select>
+        <label class="label-generate-form">Nama Dealer</label>
+        <input type="text" id="dealer" class="form-control" placeholder="Masukan nama dealer (opsional)">
+        `;
 
-                if (type != 'roll' && type != 'sub_roll') {
-                    swalHtmlContent += `
-                        <label class="label-generate-form">Pilih tanggal:</label>
-                        <input type="date" id="tanggalData" class="form-control">
-                    `;
-                } else {
-                    var from = '';
-                    if(type == 'sub_roll') from = 'sub_roll';
+    // --- LOGIKA ANJAY UNTUK KEANJAYAN FORM BERBEDA ---
+    if (type != 'roll' && type != 'sub_roll') {
+        swalHtmlContent += `
+            <label class="label-generate-form">Pilih tanggal:</label>
+            <input type="date" id="tanggalData" class="form-control">
+        `;
 
-                    $.ajax({
-                        url: get_produk, 
-                        data: {from: from},
-                        method: 'GET',
-                        success: function(response) {
-
-                            swalHtmlContent += `
-                                <label class="label-generate-form">Pilih produk:</label>
-                                <select id="produkData" class="form-select select2">
-                                    <option>Pilih produk</option>
-                            `;
-                            response.forEach(function(produk) {
-                                if(type == 'roll'){
-                                    swalHtmlContent += `
-                                        <option value="${produk.id}">${produk.nama_produk}</option>
-                                    `;
-                                }else{
-                                    swalHtmlContent += `
-                                        <option value="${produk.id}-${produk.roll_name}">${produk.roll_name} - ${produk.nama_produk}</option>
-                                    `
-                                }
-                            });
-                            swalHtmlContent += `</select>`;
-
-                            Swal.fire({
-                                title: 'Generate Kode?',
-                                text: "Pilih jumlah data yang ingin di-generate:",
-                                html: swalHtmlContent,
-                                focusConfirm: false,
-                                showCancelButton: true,
-                                confirmButtonText: 'Ya, Generate Data!',
-                                onOpen: () => {
-                                    setTimeout(() => {
-                                        $('.select2').select2({
-                                            dropdownParent: $('.swal2-container')
-                                        });
-                                    }, 100);
-                                },
-                                preConfirm: () => {
-                                    const jumlahData = $('#jumlahData').val();
-                                    const tanggalData = $('#tanggalData').val() ?? '';
-                                    const produkData = $('#produkData').val(); // Ambil nilai dari select produk
-
-                                    if (type != 'roll' && type != 'sub_roll') {
-                                        if (!jumlahData || !tanggalData || !produkData) {
-                                            Swal.showValidationMessage('Anda harus memilih jumlah data, produk, dan tanggal!')
-                                        }
-                                    } else {
-                                        if (!jumlahData || !produkData) {
-                                            Swal.showValidationMessage('Anda harus memilih jumlah data dan produk!')
-                                        }
-                                    }
-                                    return { jumlahData: jumlahData, tanggalData: tanggalData, produkData: produkData }
-                                }
-                            }).then((result) => {
-                                const { jumlahData, tanggalData, produkData } = result.value;
-                                if (result) {
-                                    $.ajax({
-                                        url: link,
-                                        method: 'GET',
-                                        data: { jumlah: jumlahData, tanggal: tanggalData, produk: produkData },
-                                        success: function(response) {
-                                            Swal.fire('Sukses!', 'Data berhasil di-generate.', 'success')
-                                                .then(() => {
-                                                    window.location.reload(); // Reload halaman untuk menampilkan data baru
-                                                });
-                                        },
-                                        error: function() {
-                                            Swal.fire('Gagal!', 'Gagal Generate Data!', 'error');
-                                        }
-                                    });
-                                }
-                            });
-                        },
-                        error: function() {
-                            Swal.fire('Gagal!', 'Gagal mendapatkan data produk!', 'error');
-                        }
-                    });
-                    return; // Stop execution so the Swal is displayed after products are fetched
+        Swal.fire({
+            title: 'Generate Kode?',
+            html: swalHtmlContent,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Generate Data!',
+            onOpen: () => { // Menggunakan onOpen
+                $('.select2').select2({
+                    dropdownParent: $('.swal2-container')
+                });
+            },
+            preConfirm: () => {
+                return {
+                    jumlah: $('#jumlahData').val(),
+                    tanggal: $('#tanggalData').val(),
+                    dealer: $('#dealer').val()
                 }
+            }
+        }).then((result) => {
+            // === PERBAIKAN FINAL DI SINI ===
+            // Cukup periksa apakah result.value ada. Ini lebih aman untuk semua versi.
+            if (result.value) {
+                $.ajax({
+                    url: link,
+                    method: 'GET',
+                    data: result.value, // Langsung kirim semua data dari preConfirm
+                    success: function(response) {
+                        // Di sini kita asumsikan controller akan reload halaman
+                        // karena controller asli Anda menggunakan redirect.
+                        Swal.fire('Sukses!', 'Data sedang diproses...', 'success');
+                        setTimeout(function(){ window.location.reload(); }, 1500);
+                    },
+                    error: function() {
+                        Swal.fire('Gagal!', 'Gagal Generate Data!', 'error');
+                    }
+                });
+            }
+        });
+
+    } else { // Blok untuk roll/sub_roll
+        var from = (type == 'sub_roll') ? 'sub_roll' : '';
+        $.ajax({
+            url: get_produk,
+            data: { from: from },
+            method: 'GET',
+            success: function(response) {
+                swalHtmlContent += `
+                    <label class="label-generate-form">Pilih produk:</label>
+                    <select id="produkData" class="form-select select2">
+                        <option>Pilih produk</option>`;
+                response.forEach(function(produk) {
+                    var value = (type == 'roll') ? produk.id : `${produk.id}-${produk.roll_name}`;
+                    var text = (type == 'roll') ? produk.nama_produk : `${produk.roll_name} - ${produk.nama_produk}`;
+                    swalHtmlContent += `<option value="${value}">${text}</option>`;
+                });
+                swalHtmlContent += `</select>`;
 
                 Swal.fire({
                     title: 'Generate Kode?',
-                    text: "Pilih jumlah data yang ingin di-generate:",
                     html: swalHtmlContent,
                     focusConfirm: false,
                     showCancelButton: true,
                     confirmButtonText: 'Ya, Generate Data!',
-                    onOpen: () => {
-                        // Inisialisasi Select2 setelah modal SweetAlert terbuka
-                        setTimeout(() => {
-                            $('.select2').select2({
-                                dropdownParent: $('.swal2-container')
-                            });
-                        }, 100);
+                    onOpen: () => { // Menggunakan onOpen
+                        $('.select2').select2({
+                            dropdownParent: $('.swal2-container')
+                        });
                     },
                     preConfirm: () => {
-                        const jumlahData = $('#jumlahData').val();
-                        const tanggalData = $('#tanggalData').val() ?? '';
-                        const produkData = $('#produkData').val();
-
-                        if (type != 'roll' && type != 'sub_roll') {
-                            if (!jumlahData || !tanggalData) {
-                                Swal.showValidationMessage('Anda harus memilih jumlah data dan tanggal!')
-                            }
-                        } else {
-                            if (!jumlahData || !produkData) {
-                                Swal.showValidationMessage('Anda harus memilih jumlah data dan Produk!')
-                            }
+                        return {
+                            jumlah: $('#jumlahData').val(),
+                            dealer: $('#dealer').val(),
+                            produk: $('#produkData').val(),
+                            tanggal: '' // tanggal dikosongkan untuk tipe ini
                         }
-                        return { jumlahData: jumlahData, tanggalData: tanggalData, produkData: produkData }
                     }
                 }).then((result) => {
-                    const { jumlahData, tanggalData, produkData } = result.value;
-                    if (result) {
+                    // === PERBAIKAN FINAL DI SINI JUGA ===
+                    if (result.value) {
                         $.ajax({
                             url: link,
                             method: 'GET',
-                            data: { jumlah: jumlahData, tanggal: tanggalData, produk: produkData },
+                            data: result.value, // Langsung kirim semua data
                             success: function(response) {
-                                Swal.fire('Sukses!', 'Data berhasil di-generate.', 'success')
-                                    .then(() => {
-                                        window.location.reload(); // Reload halaman untuk menampilkan data baru
-                                    });
+                                Swal.fire('Sukses!', 'Data sedang diproses...', 'success');
+                                setTimeout(function(){ window.location.reload(); }, 1500);
                             },
                             error: function() {
                                 Swal.fire('Gagal!', 'Gagal Generate Data!', 'error');
@@ -919,7 +878,13 @@
                         });
                     }
                 });
-            });
+            },
+            error: function() {
+                Swal.fire('Gagal!', 'Gagal mendapatkan data produk!', 'error');
+            }
+        });
+    }
+});
 
             $(document).on('click','.btn-delete', function (e) {
                 e.preventDefault();

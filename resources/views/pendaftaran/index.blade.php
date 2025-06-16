@@ -173,6 +173,7 @@
                                     <th>Jenis Mobil</th>
                                     <th>Nomor Rangka</th>
                                     <th>Nomor Plat</th>
+                                    <th>Dealer</th>
                                     <th>Status</th>
                                     <th>Aksi</th>
                                 </tr>
